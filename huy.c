@@ -6,17 +6,17 @@
 #include <linux/fs.h>
 
 //Max minor devices
-#define MAX_DEV 2;
+#define MAX_DEV 2
 
 
 // Initialize file_operations
 static const struct file_operations huydev_fops = {
     .owner      = THIS_MODULE,
-    .open       = mychardev_open,
-    .release    = mychardev_release,
-    .unlocked_ioctl = mychardev_ioctl,
-    .read       = mychardev_read,
-    .write       = mychardev_write
+//    .open       = huydev_open,
+//    .release    = huydev_release,
+//    .unlocked_ioctl = huydev_ioctl,
+//    .read       = huydev_read,
+//    .write       = huydev_write
 };
 
 // Device data holder. May be extend to hold additional data
@@ -43,13 +43,13 @@ static int __init hello_start(void) {
     dev_major = MAJOR(dev);
 
     if (err) {
-        printk(KERN_WARNING "scull: can't get major %d\n", scull_major);
+        printk(KERN_WARNING "huy: can't get major %d\n", dev_major);
         return err;
     }
 
     huydev_class = class_create(THIS_MODULE, "huy");
 
-    for (i = 0, i < MAX_DEV, i++) {
+    for (i = 0; i < MAX_DEV; i++) {
         //Init new device
         cdev_init(&huydev_data[i].cdev, &huydev_fops);
         huydev_data[i].cdev.owner = THIS_MODULE;
@@ -58,7 +58,7 @@ static int __init hello_start(void) {
         cdev_add(&huydev_data[i].cdev, MKDEV(dev_major, i ), 1);
 
         //create device node /dev/huyx where x is minor number of the device
-        device_create(huydev_class, NULL, MKDEV(devmajor, i), NULL, "huy%d", i);
+        device_create(huydev_class, NULL, MKDEV(dev_major, i), NULL, "huy%d", i);
     }
 
     return 0;
@@ -69,11 +69,11 @@ static void __exit hello_end(void) {
     int i;
 
     for (i = 0; i < MAX_DEV; i++) {
-        device_destroy(mychardev_class, MKDEV(dev_major, i));
+        device_destroy(huydev_class, MKDEV(dev_major, i));
     }
 
-    class_unregister(mychardev_class);
-    class_destroy(mychardev_class);
+    class_unregister(huydev_class);
+    class_destroy(huydev_class);
 
     unregister_chrdev_region(MKDEV(dev_major, 0), MINORMASK);
 }
